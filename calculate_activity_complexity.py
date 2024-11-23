@@ -17,7 +17,7 @@ vol_var='RAW_NUM_CUSTOMERS'
 county_dict=pd.read_csv('/data/us_fips_codes_new.csv')
 county_dict['st_county_code']=[str(e) if len(str(e))==5 else '0'+str(e) for e in county_dict['st_county_code']]
 
-for year in range(2019,2025):
+for year in range(2019,2024):
     df_full=pd.DataFrame()
     for month in range(1,13):
         if len(str(month))<2:
