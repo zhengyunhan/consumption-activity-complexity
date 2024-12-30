@@ -1,0 +1,88 @@
+library(spdep)
+library(sf)
+library(cleangeo)
+library(maps)
+library(spatialreg)
+library(ggplot2)
+library(stargazer)
+library(texreg)
+library(dplyr)
+library(tidyr)
+library(car)
+library(fixest)
+
+input_folder='activity_complexity'
+file_path <- paste0(input_folder, '/df.csv')
+
+df <- read.csv(file_path)
+
+# GDP model
+eq1<-log(gdp) ~ ACI
+eq2<-log(gdp) ~ ACI+log(pop_total+1)+factor(year)
+eq3<-as.formula(paste("log(gdp) ~ ACI+log(pop_total+1)+factor(year)+", paste(ind_columns2, collapse = " + ")))
+eq4 <- as.formula(paste("log(gdp) ~ ACI+log(pop_total+1)+log(medinc_k+1)+pct_emp+median_schooling+pct_female+age_median+
+pct_white+factor(year)+", paste(ind_columns2, collapse = " + ")))
+eq5 <- as.formula(paste("log(gdp) ~ ACI+log(pop_total+1)+log(medinc_k+1)+pct_emp+median_schooling+pct_female+age_median+
+pct_white+entropy_naics+factor(year)+", paste(ind_columns2, collapse = " + ")))
+eq6 <- as.formula(paste("log(gdp) ~ ACI+log(pop_total+1)+log(medinc_k+1)+pct_emp+median_schooling+pct_female+age_median+
+pct_white+entropy_naics+pct_retail_and_food+pct_health+pct_arts+pct_finance+pct_education+factor(year)+", paste(ind_columns2, collapse = " + ")))
+
+ols1 <- lm(eq1, data=df)
+ols2 <- lm(eq2, data=df)
+ols3 <- lm(eq3, data=df)
+ols4 <- lm(eq4, data=df)
+ols5 <- lm(eq5, data=df)
+ols6 <- lm(eq6, data=df)
+
+## Housing Value
+housing_equ1<-log(HousingValue+1)~ACI
+housing_equ3<-log(HousingValue+1)~ACI+log(pop_total+1)+log(medinc_k+1)+pct_emp+median_schooling+pct_female+age_median+
+pct_white+factor(year)
+housing_equ4<-log(HousingValue+1)~ACI+log(pop_total+1)+log(medinc_k+1)+pct_emp+median_schooling+pct_female+age_median+
+pct_white+entropy_naics+factor(year)
+housing_equ5<-log(HousingValue+1)~ACI+log(pop_total+1)+log(medinc_k+1)+pct_emp+median_schooling+pct_female+age_median+
+pct_white+entropy_naics+pct_retail_and_food+
+pct_health+pct_arts+pct_finance+pct_education+factor(year)
+
+housing_ols1<- lm(housing_equ1, data=df)
+housing_ols2<- lm(housing_equ2, data=df)
+housing_ols3<- lm(housing_equ3, data=df)
+housing_ols4<- lm(housing_equ4, data=df)
+housing_ols5<- lm(housing_equ5, data=df)
+
+## Migration
+df_til22<-df%>%
+filter(year>2018 & year<2024)
+
+mod_mig0 <- lm(log(INDIVIDUAL_to+1)~log(emp+1)+factor(year),data=df_til22)
+mod_mig1 <- lm(log(INDIVIDUAL_to+1)~ACI,data=df_til22)
+mod_mig2<-lm(log(INDIVIDUAL_to+1)~ACI+log(pop_total+1)+factor(year),data=df_til22)
+mod_mig3 <- lm(log(INDIVIDUAL_to+1)~ACI+log(pop_total+1)+log(medinc_k+1)+pct_emp+median_schooling+pct_female+age_median+
+pct_white+factor(year),data=df_til22)
+mod_mig4 <- lm(log(INDIVIDUAL_to+1)~ACI+log(pop_total+1)+log(medinc_k+1)+pct_emp+median_schooling+pct_female+age_median+
+pct_white+entropy_naics+factor(year),data=df_til22)
+mod_mig5<- lm(log(INDIVIDUAL_to+1)~ACI+log(pop_total+1)+log(medinc_k+1)+pct_emp+median_schooling+pct_female+age_median+
+pct_white+entropy_naics+pct_retail_and_food+
+pct_health+pct_arts+pct_finance+pct_education+factor(year),data=df_til22)
+
+## Mobility flow (gravity model)
+mob_dir=paste0(input_folder,'/mobility_df.csv')
+mob_df <- read.csv(mob_dir)
+
+mob_equ1<-log(count+1)~dest_ACI+log(distance_km+1)+log(dest_pop_total+1)+log(home_pop_total+1)
+mob_equ2<-log(count+1)~dest_ACI+log(distance_km+1)+log(dest_pop_total+1)+log(home_pop_total+1)+
+dest_entropy_naics+factor(year)
+mob_equ3<-log(count+1)~dest_ACI+log(distance_km+1)+log(dest_pop_total+1)+log(home_pop_total+1)+
+dest_pct_retail_and_food+dest_pct_health+dest_pct_arts+dest_pct_finance+
+dest_pct_education+factor(year)
+
+mob_ols1<- lm(mob_equ1, data=mob_df)
+mob_ols2<- lm(mob_equ2, data=mob_df)
+mob_ols3<- lm(mob_equ3, data=mob_df)
+
+## Experienced Income Segregation
+mod_inc_div1<-lm(inc_diversity~ACI,data=df)
+mod_inc_div2<-lm(inc_diversity~log(pop_total+1),data=df)
+mod_inc_div3<-lm(inc_diversity~ACI+log(pop_total+1)+log(medinc_k+1)+pct_emp+median_schooling+pct_female+age_median+
+pct_white+entropy_naics+pct_retail_and_food+pct_health+pct_arts+pct_finance+pct_education+
+factor(year),data=df)
